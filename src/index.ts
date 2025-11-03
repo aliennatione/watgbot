@@ -115,4 +115,4 @@ console.log(`
 - Redis: ${redis.isConnected() ? 'Connesso' : 'Disconnesso'}
 
 Configurazione inoltro:
-${JSON.stringify(forwarder['rules'], null, 2)}`
+${JSON.stringify(forwarder['rules'], null, 2)}`);
