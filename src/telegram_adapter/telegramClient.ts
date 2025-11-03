@@ -109,7 +109,33 @@ export class TelegramClient {
     }
 
     // Gestione file più grandi
-    const file = ctx.message[mediaType];
+    let file: any;
+    switch (mediaType) {
+      case "image":
+        file = ctx.message.photo;
+        break;
+      case "document":
+        file = ctx.message.document;
+        break;
+      case "audio":
+        file = ctx.message.audio || ctx.message.voice; // Telegraf treats voice as audio
+        break;
+      case "video":
+        file = ctx.message.video;
+        break;
+      case "sticker":
+        file = ctx.message.sticker;
+        break;
+      default:
+        console.warn(`[TELEGRAM] Unknown media type: ${mediaType}`);
+        return;
+    }
+
+    if (!file) {
+      console.warn(`[TELEGRAM] No file found for media type: ${mediaType}`);
+      return;
+    }
+
     const fileId = Array.isArray(file) ? file[file.length - 1].file_id : file.file_id;
     
     try {

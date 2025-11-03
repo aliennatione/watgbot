@@ -216,3 +216,4 @@ export class WhatsAppClient {
     } catch (error) {
       console.error("[WHATSAPP] Errore elaborazione media:", error);
     }
+}
