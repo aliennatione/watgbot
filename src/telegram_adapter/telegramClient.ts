@@ -1,5 +1,4 @@
-import { Telegraf, Context, session } from "telegraf";
-import { SessionFlavor } from "@telegraf/session";
+import { Telegraf, Context, session, SessionFlavor } from "telegraf";
 import { promises as fs } from "fs";
 import { MessageContext, MediaContext } from "../core/router";
 import { MediaManager } from "../core/mediaManager";
