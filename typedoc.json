@@ -1,0 +1,17 @@
+{
+  "entryPoints": ["src/index.ts"],
+  "out": "docs/api",
+  "name": "Userbot API Documentation",
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "excludeExternals": true,
+  "exclude": ["**/tests/**", "**/*.spec.ts", "**/node_modules/**"],
+  "plugin": ["typedoc-plugin-markdown"],
+  "readme": "docs/index.md",
+  "theme": "default",
+  "githubPages": true,
+  "navigationLinks": {
+    "Documentazione": "/",
+    "GitHub": "https://github.com/yourusername/userbot"
+  }
+}
