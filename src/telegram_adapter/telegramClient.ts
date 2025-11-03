@@ -115,7 +115,7 @@ export class TelegramClient {
     } else if ('document' in ctx.message && mediaType === "document") {
       file = ctx.message.document;
     } else if (('audio' in ctx.message || 'voice' in ctx.message) && mediaType === "audio") {
-      file = ctx.message.audio || ctx.message.voice;
+      file = (ctx.message as any).audio || (ctx.message as any).voice;
     } else if ('video' in ctx.message && mediaType === "video") {
       file = ctx.message.video;
     } else if ('sticker' in ctx.message && mediaType === "sticker") {

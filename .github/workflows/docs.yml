@@ -3,7 +3,7 @@ name: Build & Deploy Documentation
 on:
   workflow_dispatch: {}
   workflow_run:
-    workflows: ["Test Suite"]
+    workflows: ["Type Check"]
     types:
       - completed
     branches:
@@ -12,6 +12,7 @@ on:
 
 jobs:
   build-docs:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -24,14 +25,14 @@ jobs:
           
       - name: Install dependencies
         run: npm install
-
+ 
       - name: Download test results
         uses: actions/download-artifact@v4
         with:
           name: test-results
           path: test-results
         continue-on-error: true
-
+ 
       - name: Parse test results
         run: node scripts/parse-test-results.js
         
