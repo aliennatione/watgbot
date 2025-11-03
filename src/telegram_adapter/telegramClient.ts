@@ -1,4 +1,6 @@
-import { Telegraf, Context, session, SessionFlavor } from "telegraf";
+import { Telegraf, Context, session } from "telegraf";
+import { SessionFlavor } from "@telegraf/session";
+import { promises as fs } from "fs";
 import { MessageContext, MediaContext } from "../core/router";
 import { MediaManager } from "../core/mediaManager";
 import { RedisClient } from "../storage/redisClient";
@@ -136,7 +138,11 @@ export class TelegramClient {
       
     } catch (error) {
       console.error(`[TELEGRAM] Errore elaborazione media:`, error);
-      await ctx.reply(`⚠️ Errore elaborazione media: ${error.message}`);
+      let errorMessage = 'Unknown error';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      await ctx.reply(`⚠️ Errore elaborazione media: ${errorMessage}`);
     }
   }
 

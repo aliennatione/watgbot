@@ -1,19 +1,16 @@
-import {
-  WAConnection,
-  MessageType,
-  MessageOptions,
-  downloadContentFromMessage,
-  getMediaKeys
-} from "@whiskeysockets/baileys";
+import makeWASocket, { useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, MediaType, downloadContentFromMessage } from "@whiskeysockets/baileys";
+import { Boom } from "@hapi/boom";
 import { RedisClient } from "../storage/redisClient";
 import { MediaManager } from "../core/mediaManager";
 import { MessageContext, MediaContext } from "../core/router";
 
 export class WhatsAppClient {
-  private conn: WAConnection;
+  private conn: any; // Type will be inferred from makeWASocket
   private mediaManager: MediaManager;
   private redis: RedisClient;
   private qrCodePath: string;
+  private authState: any;
+  private saveCreds: () => Promise<void>;
 
   constructor(
     private router: any,
@@ -23,45 +20,47 @@ export class WhatsAppClient {
     this.mediaManager = mediaManager;
     this.redis = redis;
     this.qrCodePath = process.env.WHATSAPP_QR_OUTPUT_PATH || "/tmp/whatsapp-qr.png";
-    
-    this.conn = new WAConnection();
-    
-    // Eventi connessione
-    this.conn.on("connection-verified", () => {
-      console.log("[WHATSAPP] Connessione verificata e stabile");
-    });
-    
-    this.conn.on("qr", async (qr: string) => {
-      console.log("[WHATSAPP] QR Code generato, scan per connetterti");
-      // In produzione: salva QR o invia notifica
-      require('fs').writeFileSync(this.qrCodePath, qr);
-    });
-    
-    // Gestione messaggi
-    this.conn.on("message-new", this.handleNewMessage.bind(this));
   }
 
   async start(): Promise<void> {
-    const sessionName = process.env.WHATSAPP_SESSION_NAME || "default";
-    const session = await this.redis.hgetall(`whatsapp:session:${sessionName}`);
-    
-    if (Object.keys(session).length > 0) {
-      console.log("[WHATSAPP] Ripristino sessione esistente");
-      this.conn.loadAuthInfo(session);
-    }
-    
-    await this.conn.connect();
-    
-    // Salva sessione dopo connessione
-    this.conn.on("open", async () => {
-      const authInfo = this.conn.base64EncodedAuthInfo();
-      await this.redis.hset(`whatsapp:session:${sessionName}`, "auth", JSON.stringify(authInfo));
-      console.log("[WHATSAPP] Sessione salvata in Redis");
+    const { state, saveCreds } = await useMultiFileAuthState('baileys_auth_info');
+    this.authState = state;
+    this.saveCreds = saveCreds;
+
+    this.conn = makeWASocket({
+      auth: this.authState,
+      printQRInTerminal: false,
+    });
+
+    this.conn.ev.on('creds.update', this.saveCreds);
+
+    this.conn.ev.on('connection.update', (update: any) => {
+      const { connection, lastDisconnect, qr } = update;
+      if (connection === 'close') {
+        const shouldReconnect = (lastDisconnect?.error as Boom)?.output?.statusCode !== DisconnectReason.loggedOut;
+        console.log('[WHATSAPP] Connection closed due to ', lastDisconnect?.error, ', reconnecting ', shouldReconnect);
+        if (shouldReconnect) {
+          this.start();
+        }
+      } else if (connection === 'open') {
+        console.log('[WHATSAPP] Opened connection');
+      }
+      if (qr) {
+        require('fs').writeFileSync(this.qrCodePath, qr);
+        console.log('[WHATSAPP] QR Code generated, scan to connect');
+      }
+    });
+
+    this.conn.ev.on('messages.upsert', async (m: any) => {
+      const msg = m.messages[0];
+      if (!msg.key.fromMe && m.type === 'notify') {
+        await this.handleNewMessage(msg);
+      }
     });
   }
 
   stop(): void {
-    this.conn.close();
+    this.conn.end();
   }
 
   async sendMessage(chatId: string, text: string, media?: MediaContext): Promise<void> {
@@ -70,20 +69,15 @@ export class WhatsAppClient {
         const mediaBuffer = await this.downloadExternalMedia(media.mediaUrl);
         
         if (media.mediaType === "image") {
-          await this.conn.sendMessage(chatId, mediaBuffer, MessageType.image, {
-            caption: media.caption || text
-          } as MessageOptions);
+          await this.conn.sendMessage(chatId, { image: mediaBuffer, caption: media.caption || text });
         } else if (media.mediaType === "document") {
-          await this.conn.sendMessage(chatId, mediaBuffer, MessageType.document, {
-            filename: media.caption || "documento",
-            mimetype: media.mimeType || "application/octet-stream"
-          } as MessageOptions);
+          await this.conn.sendMessage(chatId, { document: mediaBuffer, fileName: media.caption || "documento", mimetype: media.mimeType || "application/octet-stream" });
         } else {
           // Fallback a messaggio testuale con link
-          await this.conn.sendMessage(chatId, `${text}\n[Media: ${media.mediaUrl}]`, MessageType.text);
+          await this.conn.sendMessage(chatId, { text: `${text}\n[Media: ${media.mediaUrl}]` });
         }
       } else {
-        await this.conn.sendMessage(chatId, text, MessageType.text);
+        await this.conn.sendMessage(chatId, { text: text });
       }
     } catch (error) {
       console.error(`[WHATSAPP] Invio fallito a ${chatId}:`, error);
@@ -108,30 +102,29 @@ export class WhatsAppClient {
 
   private async handleNewMessage(msg: any): Promise<void> {
     if (!msg.message) return;
-    
-    // Ignora messaggi di stato (lettura, digitazione, ecc.)
-    if (msg.message.protocolMessage || msg.message.senderKeyDistributionMessage) return;
-    
+
     const chatId = msg.key.remoteJid;
     const isGroup = chatId.endsWith("@g.us");
     const senderId = msg.key.participant || msg.key.remoteJid;
-    
+
+    let text = msg.message.conversation || msg.message.extendedTextMessage?.text || "";
+
     // Gestione messaggi testuali
-    if (msg.message.conversation) {
+    if (text) {
       this.processTextMessage({
         chatId,
-        text: msg.message.conversation,
+        text,
         senderId,
         isGroup
       });
       return;
     }
-    
+
     // Gestione media
     const mediaTypes = ["imageMessage", "documentMessage", "audioMessage", "videoMessage", "stickerMessage"];
     for (const type of mediaTypes) {
       if (msg.message[type]) {
-        await this.processMediaMessage(msg, type as keyof typeof msg.message);
+        await this.processMediaMessage(msg, type);
         return;
       }
     }
@@ -164,7 +157,16 @@ export class WhatsAppClient {
     try {
       // Estrai informazioni media
       const mediaMessage = msg.message[mediaType];
-      const stream = await downloadContentFromMessage(mediaMessage, mediaType as any);
+
+      let baileysMediaType: MediaType;
+      if (mediaType === "imageMessage") baileysMediaType = "image";
+      else if (mediaType === "videoMessage") baileysMediaType = "video";
+      else if (mediaType === "audioMessage") baileysMediaType = "audio";
+      else if (mediaType === "documentMessage") baileysMediaType = "document";
+      else if (mediaType === "stickerMessage") baileysMediaType = "sticker";
+      else throw new Error(`Unknown media type: ${mediaType}`);
+
+      const stream = await downloadContentFromMessage(mediaMessage, baileysMediaType);
       
       // Salva stream su file
       const chunks: Buffer[] = [];
@@ -215,4 +217,5 @@ export class WhatsAppClient {
       console.error("[WHATSAPP] Errore elaborazione media:", error);
     }
   }
+}
 }

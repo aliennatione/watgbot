@@ -64,7 +64,7 @@ export class MediaManager {
     response.data.pipe(writer);
     
     await new Promise((resolve, reject) => {
-      writer.on('finish', resolve);
+      writer.on('finish', () => resolve());
       writer.on('error', reject);
     });
 
@@ -138,7 +138,9 @@ export class MediaManager {
           await fs.unlink(path);
           cleaned++;
         } catch (error) {
-          if (error.code !== 'ENOENT') {
+          if (error instanceof Error && 'code' in error && error.code === 'ENOENT') {
+            // Ignore ENOENT errors (file not found, already cleaned up)
+          } else {
             console.error(`[MEDIA] Cleanup failed for ${path}:`, error);
           }
         }

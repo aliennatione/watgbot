@@ -1,5 +1,7 @@
 import { MessageContext, MediaContext } from "./router";
 
+export { MessageContext, MediaContext };
+
 export interface Plugin {
   name?: string;
   processMessage(context: MessageContext & Partial<MediaContext>): Promise<void>;

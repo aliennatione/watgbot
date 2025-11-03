@@ -50,17 +50,23 @@ export class MessageForwarder {
       for (const destChatId of destinations) {
         // Applica trasformazioni in base alle regole
         let forwardedText = msg.text;
-        let forwardedMedia = msg.media ? { ...msg.media } : undefined;
+        let forwardedMedia: MediaContext | undefined = msg.mediaUrl ? {
+          mediaUrl: msg.mediaUrl,
+          mediaType: msg.mediaType!,
+          caption: msg.caption,
+          mimeType: msg.mimeType,
+          size: msg.size,
+        } : undefined;
 
         // Forza solo testo se configurato
         if (rule.textOnly) {
           forwardedMedia = undefined;
-          if (msg.media) {
-            forwardedText += `\n[Media rimosso: ${msg.media.mediaType}]`;
+          if (msg.mediaUrl) {
+            forwardedText += `\n[Media rimosso: ${msg.mediaType}]`;
           }
         } 
         // Blocca media se non consentiti
-        else if (msg.media && !rule.mediaAllowed) {
+        else if (msg.mediaUrl && !rule.mediaAllowed) {
           forwardedMedia = undefined;
           forwardedText += `\n[Media non consentiti per questa regola]`
         }

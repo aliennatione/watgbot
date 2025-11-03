@@ -61,7 +61,11 @@ export class Router {
       
       // Invia notifica di errore all'amministratore
       if (process.env.ADMIN_CHAT_ID) {
-        const errorMsg = `[ERRORE] Elaborazione fallita per ${context.platform}:${context.chatId}\n${error.message}`;
+        let errorMessage = 'Unknown error';
+        if (error instanceof Error) {
+          errorMessage = error.message;
+        }
+        const errorMsg = `[ERRORE] Elaborazione fallita per ${context.platform}:${context.chatId}\n${errorMessage}`;
         this.sendAdminNotification(errorMsg).catch(console.error);
       }
     }

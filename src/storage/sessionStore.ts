@@ -4,13 +4,13 @@ import { Session } from "../core/router";
 @Entity()
 export class ChatSession {
   @PrimaryColumn()
-  id: string; // formato: "platform:chatId"
+  id!: string; // formato: "platform:chatId"
 
   @Column()
-  platform: "telegram" | "whatsapp";
+  platform!: "telegram" | "whatsapp";
 
   @Column()
-  chatId: string;
+  chatId!: string;
 
   @Column({ nullable: true })
   lastMessage?: string;
@@ -19,15 +19,15 @@ export class ChatSession {
   lastMediaId?: string;
 
   @Column({ type: "timestamp", default: () => "CURRENT_TIMESTAMP" })
-  lastActive: Date;
+  lastActive!: Date;
 
   @Column({ type: "jsonb", default: {} })
-  meta: Record<string, any>;
+  meta!: Record<string, any>;
 }
 
 export class SessionStore {
-  private dataSource: DataSource;
-  private sessionRepository: Repository<ChatSession>;
+  private dataSource!: DataSource;
+  private sessionRepository!: Repository<ChatSession>;
 
   constructor(private redisClient: any) {
     this.dataSource = new DataSource({
@@ -64,7 +64,7 @@ export class SessionStore {
     
     entity.lastMessage = session.lastMessage;
     entity.lastMediaId = session.lastMediaId;
-    entity.metadata = { ...entity.metadata, ...session.metadata };
+    entity.meta = { ...entity.meta, ...session.metadata };
     entity.lastActive = new Date();
     
     await this.sessionRepository.save(entity);
@@ -97,7 +97,7 @@ export class SessionStore {
         chatId: entity.chatId,
         lastMessage: entity.lastMessage,
         lastMediaId: entity.lastMediaId,
-        metadata: entity.metadata
+        metadata: entity.meta
       };
     }
     
