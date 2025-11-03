@@ -12,7 +12,6 @@ on:
 
 jobs:
   build-docs:
-    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -31,6 +30,7 @@ jobs:
         with:
           name: test-results
           path: test-results
+        continue-on-error: true
 
       - name: Parse test results
         run: node scripts/parse-test-results.js
