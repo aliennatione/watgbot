@@ -10,7 +10,7 @@ export class WhatsAppClient {
   private redis: RedisClient;
   private qrCodePath: string;
   private authState: any;
-  private saveCreds: () => Promise<void>;
+  private saveCreds: (() => Promise<void>) | undefined;
 
   constructor(
     private router: any,
@@ -216,6 +216,5 @@ export class WhatsAppClient {
     } catch (error) {
       console.error("[WHATSAPP] Errore elaborazione media:", error);
     }
-  }
-}
+  
 }
