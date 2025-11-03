@@ -27,7 +27,7 @@ jobs:
         run: npm install
 
       - name: Download test results
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: test-results
           path: test-results
