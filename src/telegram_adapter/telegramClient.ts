@@ -1,4 +1,4 @@
-import { Telegraf, Context, session, SessionFlavor } from "telegraf";
+import { Telegraf, Context, session } from "telegraf";
 import { promises as fs } from "fs";
 import { MessageContext, MediaContext } from "../core/router";
 import { MediaManager } from "../core/mediaManager";
@@ -85,6 +85,11 @@ export class TelegramClient {
   }
 
   private async handleTextMessage(ctx: CustomContext): Promise<void> {
+    if (!ctx.chat || !ctx.from || !ctx.message || !('text' in ctx.message)) {
+      console.warn("[TELEGRAM] Skipping message due to missing chat, from, or text property.");
+      return;
+    }
+
     const context: MessageContext = {
       platform: "telegram",
       chatId: ctx.chat.id.toString(),
@@ -98,6 +103,11 @@ export class TelegramClient {
   }
 
   private async handleMedia(ctx: CustomContext, mediaType: MediaContext["mediaType"]): Promise<void> {
+    if (!ctx.chat || !ctx.from || !ctx.message) {
+      console.warn("[TELEGRAM] Skipping media message due to missing chat, from, or message property.");
+      return;
+    }
+
     // Gestione file più grandi
     const file = ctx.message[mediaType];
     const fileId = Array.isArray(file) ? file[file.length - 1].file_id : file.file_id;
@@ -105,9 +115,10 @@ export class TelegramClient {
     try {
       // Scarica il file da Telegram
       const fileLink = await ctx.telegram.getFileLink(fileId);
+      const caption = 'caption' in ctx.message ? ctx.message.caption : undefined;
       const mediaInfo = await this.mediaManager.downloadMedia(
         fileLink.toString(),
-        ctx.message.caption || `telegram_${mediaType}_${Date.now()}`
+        caption || `telegram_${mediaType}_${Date.now()}`
       );
       
       // Elabora immagini per compatibilità
@@ -124,13 +135,13 @@ export class TelegramClient {
       const context: MessageContext & MediaContext = {
         platform: "telegram",
         chatId: ctx.chat.id.toString(),
-        text: ctx.message.caption || "[Media senza descrizione]",
+        text: caption || "[Media senza descrizione]",
         senderId: ctx.from.id.toString(),
         isGroup: ctx.chat.type !== "private",
         timestamp: new Date(),
         mediaUrl,
         mediaType,
-        caption: ctx.message.caption,
+        caption: caption,
         mimeType: mediaInfo.mimeType,
         size: mediaInfo.size
       };
