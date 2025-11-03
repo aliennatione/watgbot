@@ -9,7 +9,9 @@ interface SessionData {
   data?: Record<string, any>;
 }
 
-type CustomContext = Context & SessionFlavor<SessionData>;
+interface CustomContext extends Context {
+  session?: SessionData;
+}
 
 export class TelegramClient {
   private bot: Telegraf<CustomContext>;
