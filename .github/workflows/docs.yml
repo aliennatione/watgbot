@@ -1,6 +1,7 @@
 name: Build & Deploy Documentation
 
 on:
+  workflow_dispatch: {}
   workflow_run:
     workflows: ["Test Suite"]
     types:
@@ -11,7 +12,7 @@ on:
 
 jobs:
   build-docs:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -23,7 +24,16 @@ jobs:
           node-version: 20
           
       - name: Install dependencies
-        run: npm ci
+        run: npm install
+
+      - name: Download test results
+        uses: actions/download-artifact@v3
+        with:
+          name: test-results
+          path: test-results
+
+      - name: Parse test results
+        run: node scripts/parse-test-results.js
         
       - name: Generate TypeDoc API documentation
         run: npm run docs

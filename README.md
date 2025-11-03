@@ -67,7 +67,9 @@ L'userbot è progettato per essere estensibile tramite plugin. Per creare il tuo
 
 ## Testing
 
-I test vengono eseguiti automaticamente ad ogni push sui rami `main` e `develop` tramite una GitHub Action. Per eseguire i test in locale, lancia il seguente comando:
+I test vengono eseguiti automaticamente ad ogni push sui rami `main` e `develop` tramite una GitHub Action. I risultati dei test vengono salvati e sono disponibili nella documentazione.
+
+Per eseguire i test in locale, lancia il seguente comando:
 
 ```bash
 npm test
@@ -75,7 +77,11 @@ npm test
 
 ## Documentazione
 
-La documentazione completa del progetto è disponibile nella directory [`docs`](./docs). La documentazione viene compilata e distribuita automaticamente come sito GitHub Pages tramite una GitHub Action. Questo processo si avvia solo dopo il superamento con successo del workflow di test sui rami `main` e `develop`.
+La documentazione completa del progetto è disponibile nella directory [`docs`](./docs). La documentazione viene compilata e distribuita automaticamente come sito GitHub Pages tramite una GitHub Action.
+
+Questo processo si avvia automaticamente solo dopo il superamento con successo del workflow di test sui rami `main` e `develop`. È anche possibile avviare manualmente il workflow dalla tab "Actions" del repository su GitHub.
+
+I risultati dei test sono inclusi nella documentazione e sono disponibili alla pagina [Risultati dei Test](./docs/test-results.md).
 
 ### Gestione Automatizzata del `package-lock.json`
 

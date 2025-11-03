@@ -15,4 +15,5 @@ Benvenuto nella documentazione completa del nostro Userbot centralizzato per Tel
 - [Sviluppo Plugin](plugins.md)
 - [Gestione Media](media-handling.md)
 - [Integrazione Redis](redis-integration.md)
+- [Risultati dei Test](test-results.md)
 - [API Reference](api/)
