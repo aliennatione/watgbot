@@ -76,3 +76,15 @@ npm test
 ## Documentazione
 
 La documentazione completa del progetto è disponibile nella directory [`docs`](./docs). La documentazione viene compilata e distribuita automaticamente come sito GitHub Pages tramite una GitHub Action ogni volta che viene effettuato un push sui rami `main` e `develop`.
+
+### Attivazione di GitHub Pages
+
+Perché la documentazione sia visibile online, devi attivare GitHub Pages nelle impostazioni del tuo repository su GitHub:
+
+1.  Vai alla pagina principale del tuo repository su GitHub.
+2.  Clicca su **Settings** (Impostazioni).
+3.  Nel menu a sinistra, clicca su **Pages**.
+4.  Alla voce **Source**, seleziona il branch `gh-pages` e la cartella `/(root)`.
+5.  Clicca su **Save**.
+
+La documentazione sarà disponibile all'indirizzo `https://<your-username>.github.io/<repository-name>/`.
