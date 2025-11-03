@@ -67,7 +67,7 @@ L'userbot è progettato per essere estensibile tramite plugin. Per creare il tuo
 
 ## Testing
 
-Per eseguire i test, lancia il seguente comando:
+I test vengono eseguiti automaticamente ad ogni push sui rami `main` e `develop` tramite una GitHub Action. Per eseguire i test in locale, lancia il seguente comando:
 
 ```bash
 npm test
@@ -75,16 +75,10 @@ npm test
 
 ## Documentazione
 
-La documentazione completa del progetto è disponibile nella directory [`docs`](./docs). La documentazione viene compilata e distribuita automaticamente come sito GitHub Pages tramite una GitHub Action ogni volta che viene effettuato un push sui rami `main` e `develop`.
+La documentazione completa del progetto è disponibile nella directory [`docs`](./docs). La documentazione viene compilata e distribuita automaticamente come sito GitHub Pages tramite una GitHub Action. Questo processo si avvia solo dopo il superamento con successo del workflow di test sui rami `main` e `develop`.
 
-### Attivazione di GitHub Pages
+### Gestione Automatizzata del `package-lock.json`
 
-Perché la documentazione sia visibile online, devi attivare GitHub Pages nelle impostazioni del tuo repository su GitHub:
+Il file `package-lock.json` è gestito automaticamente dal workflow di test. Ad ogni esecuzione, il workflow installerà le dipendenze, e se il file `package-lock.json` viene modificato, le modifiche verranno automaticamente committate e pushat nel repository. Questo garantisce che il file `package-lock.json` sia sempre aggiornato.
 
-1.  Vai alla pagina principale del tuo repository su GitHub.
-2.  Clicca su **Settings** (Impostazioni).
-3.  Nel menu a sinistra, clicca su **Pages**.
-4.  Alla voce **Source**, seleziona il branch `gh-pages` e la cartella `/(root)`.
-5.  Clicca su **Save**.
-
-La documentazione sarà disponibile all'indirizzo `https://<your-username>.github.io/<repository-name>/`.
+**Nota:** Perché il push automatico funzioni, è necessario che il segreto `GITHUB_TOKEN` sia disponibile nel repository. Solitamente questo è già configurato di default nei repository GitHub.

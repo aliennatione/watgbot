@@ -1,12 +1,17 @@
 name: Build & Deploy Documentation
 
 on:
-  push:
-    branches: [ main, develop ]
-  workflow_dispatch:
+  workflow_run:
+    workflows: ["Test Suite"]
+    types:
+      - completed
+    branches:
+      - main
+      - develop
 
 jobs:
   build-docs:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
